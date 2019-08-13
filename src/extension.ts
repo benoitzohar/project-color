@@ -1,27 +1,93 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as JSON5 from "json5";
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+const VSCODE_DIR = `${vscode.workspace.rootPath}/.vscode`;
+const COLOR_FILE = `${VSCODE_DIR}/color.json`;
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "project-color" is now active!');
+export function parseColorFile(fileContent: string): string | null {
+  try {
+    if (fileContent === "") {
+      return null;
+    }
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
+    const colorObj = JSON5.parse(fileContent);
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World bloup!');
-	});
-
-	context.subscriptions.push(disposable);
+    if (!colorObj || typeof colorObj !== "object" || !colorObj.color) {
+      return null;
+    }
+    return colorObj.color;
+  } catch (err) {
+    return null;
+  }
 }
 
-// this method is called when your extension is deactivated
-export function deactivate() {}
+async function readAndApplyColor(): Promise<boolean> {
+  if (!fs.existsSync(COLOR_FILE)) {
+    console.warn(`Could not find file: ${COLOR_FILE}. Skipping...`);
+    return false;
+  }
+
+  try {
+    const buffer = fs.readFileSync(COLOR_FILE, { encoding: "utf8" });
+    const color = parseColorFile(buffer.toString());
+
+    if (!color) {
+      return false;
+    }
+
+    const customizationKey = "workbench.colorCustomizations";
+    const customizations = {
+      "activityBar.background": color,
+      "statusBar.background": color
+    };
+
+    const workspaceConf = vscode.workspace.getConfiguration();
+
+    const currentCustomizations = workspaceConf.get(customizationKey);
+    if (
+      JSON.stringify(currentCustomizations) !== JSON.stringify(customizations)
+    ) {
+      workspaceConf.update(customizationKey, customizations);
+    }
+
+    return true;
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+}
+
+function createColorFile(color: string) {
+  if (!fs.existsSync(VSCODE_DIR)) {
+    fs.mkdirSync(VSCODE_DIR, { recursive: true });
+  }
+
+  fs.writeFileSync(COLOR_FILE, JSON.stringify({ color: color }));
+}
+
+function openColorFileInCode() {
+  vscode.workspace.openTextDocument(COLOR_FILE).then(doc => {
+    vscode.window.showTextDocument(doc);
+  });
+}
+
+async function updateColor() {
+  const success = await readAndApplyColor();
+  if (!success) {
+    createColorFile(getRandomDarkColor());
+    openColorFileInCode();
+  }
+}
+
+function getRandomDarkColor() {
+  return "#" + ((Math.random() * 0x555555) << 0).toString(16);
+}
+
+export async function activate(context: vscode.ExtensionContext) {
+  const watcher = vscode.workspace.createFileSystemWatcher(COLOR_FILE);
+  updateColor();
+  watcher.onDidCreate(updateColor);
+  watcher.onDidChange(updateColor);
+  watcher.onDidDelete(updateColor);
+}
