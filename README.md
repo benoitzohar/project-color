@@ -11,3 +11,10 @@ I recommend that you enable this extension only on a workspace basis, to avoid h
 
 To install, please load manually the last `.vsix` file from `releases/`.
 There is no plan to put this extension to the marketplace for now.
+
+## Usage
+
+It is recommended to add a line containing this in your global gitignore file.
+```
+.vscode/color.json
+```
