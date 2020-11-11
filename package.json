@@ -2,6 +2,9 @@
   "name": "project-color",
   "displayName": "project-color",
   "description": "Pick a highlight color for your vscode window for each of your projects",
+  "repository": {
+    "url": "https://github.com/benoitzohar/project-color"
+  },
   "publisher": "benoitzohar",
   "version": "0.0.1",
   "engines": {
@@ -19,10 +22,12 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "yarn run compile",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "release": "vsce package -o ./releases/project-color.vsix --yarn"
   },
   "devDependencies": {
     "@types/glob": "^7.1.1",
+    "@types/json5": "^0.0.30",
     "@types/mocha": "^5.2.6",
     "@types/node": "^10.12.21",
     "@types/vscode": "^1.37.0",
@@ -30,8 +35,8 @@
     "mocha": "^6.1.4",
     "tslint": "^5.12.1",
     "typescript": "^3.3.1",
-    "vscode-test": "^1.0.2",
-    "@types/json5": "^0.0.30"
+    "vsce": "^1.81.1",
+    "vscode-test": "^1.0.2"
   },
   "dependencies": {
     "json5": "^2.1.0"

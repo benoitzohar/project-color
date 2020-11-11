@@ -48,7 +48,7 @@ async function readAndApplyColor(): Promise<boolean> {
     if (
       JSON.stringify(currentCustomizations) !== JSON.stringify(customizations)
     ) {
-      workspaceConf.update(customizationKey, customizations);
+      workspaceConf.update(customizationKey, customizations, vscode.ConfigurationTarget.Workspace);
     }
 
     return true;
